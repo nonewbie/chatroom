@@ -13,7 +13,7 @@ public class ClientDataGram {
 	public final static String nameDelimiter = "###";
 	public ClientDataGram(short type,String[] friends,String _message){//chat message 0
 		this.type = type;
-		System.out.println("client data gram's friends count:" + friends.length);
+//		System.out.println("client data gram's friends count:" + friends.length);
 
 		for(int i = 0 ;i < friends.length;i++){
 			this.message += nameDelimiter + friends[i]  ;
@@ -46,7 +46,7 @@ public class ClientDataGram {
 		this.type = type;
 }
 	public String toString(){//设计有点小问题  当消息内容 是空的时候  对于只发送 类型的datagram 来说 有信息冗余
-		System.out.println("client datagtam:"+ Short.toString(this.type) + delimiter + this.message);
+//		System.out.println("client datagtam:"+ Short.toString(this.type) + delimiter + this.message);
 			return Short.toString(this.type) + delimiter + this.message;
 	
 	}

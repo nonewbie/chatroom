@@ -49,7 +49,7 @@ public class ServerThread extends Thread{
 				switch (ClientDataGramAnalyzer.getType(clientdatagram)){
 					case(0)://发送消息：
 						String accepters[] = ClientDataGramAnalyzer.getAccepters(clientdatagram);	
-						System.out.println("接收到消息:" + user.getUserName()+":"+" "+ ClientDataGramAnalyzer.getMessage(clientdatagram));
+//						System.out.println("接收到消息:" + user.getUserName()+":"+" "+ ClientDataGramAnalyzer.getMessage(clientdatagram));
 						
 						for(int i = 1; i< accepters.length;i++){//首个字符串 一定是null 所以不用
 								PrintWriter toclient = new PrintWriter(OnlineUsers.ssm.get(accepters[i]).getOutputStream(),true);
@@ -59,14 +59,17 @@ public class ServerThread extends Thread{
 						}break;		
 					case(1)://login
 						this.user.setUserName(ClientDataGramAnalyzer.getName(clientdatagram));
-						System.out.println("login name : " + this.user.getUserName());
+//						System.out.println("login name : " + this.user.getUserName());
 						this.user.setPasswd(ClientDataGramAnalyzer.getPassword(clientdatagram));
-						System.out.println("login password : " + ClientDataGramAnalyzer.getPassword(clientdatagram));
+//						System.out.println("login password : " + ClientDataGramAnalyzer.getPassword(clientdatagram));
 						try {
 							
 							if(OnlineUsers.onlineUsers.contains(this.user.getUserName())){
 								ServerDataGram logdulp = new ServerDataGram((short)3);//改用户已经登录^^^^^^^^^^^^^^^
 								out.println(logdulp.toString());
+								this.in.close();
+								this.out.close();
+								this.socket.close();
 								break;
 							}
 								
@@ -74,6 +77,9 @@ public class ServerThread extends Thread{
 							if(this.user==null){
 								ServerDataGram loginfailedmessage = new ServerDataGram((short)2);//用户名或密码错误
 								out.println(loginfailedmessage.toString());
+								this.in.close();
+								this.out.close();
+								this.socket.close();
 							}
 							else{
 								//发送在线好友列表
@@ -82,7 +88,7 @@ public class ServerThread extends Thread{
 								
 								ServerDataGram loginsuccessedmessage = new ServerDataGram((short)1,friends);//登录成功  ^^^^^^^^^^^^^^^^^
 								
-								System.out.println("server datagram: "+  loginsuccessedmessage.toString());
+//								System.out.println("server datagram: "+  loginsuccessedmessage.toString());
 								out.println(loginsuccessedmessage.toString());
 								//上线提醒：发送所有在线人
 								//if(ClientDataGramAnalyzer.getState(clientdatagram).equals("online")){
@@ -97,11 +103,7 @@ public class ServerThread extends Thread{
 								OnlineUsers.onlineUsers.add(this.user.getUserName());//*****************	
 								OnlineUsers.ssm.put(this.user.getUserName(),this.socket);
 								
-								System.out.print("在线好友数"+ OnlineUsers.onlineUsers.size() + "    online users: ");
-								for(String user: OnlineUsers.onlineUsers)
-									System.out.print(user + " ");
-								System.out.println();
-								
+//								System.out.print("在线好友数"+ OnlineUsers.onlineUsers.size() + "    online users: ");
 							}
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
@@ -129,9 +131,9 @@ public class ServerThread extends Thread{
 						break;
 					case(4)://注册
 						this.user.setUserName(ClientDataGramAnalyzer.getName(clientdatagram));
-						System.out.println("regist name : " + this.user.getUserName());
+//						System.out.println("regist name : " + this.user.getUserName());
 						this.user.setPasswd(ClientDataGramAnalyzer.getPassword(clientdatagram));
-						System.out.println("regist password : " + ClientDataGramAnalyzer.getPassword(clientdatagram));
+//						System.out.println("regist password : " + ClientDataGramAnalyzer.getPassword(clientdatagram));
 						try {
 							user.setRegisterTime(new Date());
 							if(DaoFactory.getIUserInstance().findByUserName(this.user.getUserName()) != null){
@@ -160,8 +162,8 @@ public class ServerThread extends Thread{
 							OnlineUsers.onlineUsers.add(this.user.getUserName());//*****************	
 							OnlineUsers.ssm.put(this.user.getUserName(),this.socket);
 							
-							for(String user: OnlineUsers.onlineUsers)
-								System.out.print("在线好友数" + OnlineUsers.onlineUsers.size()+ "online users: " + user);
+//							for(String user: OnlineUsers.onlineUsers)
+//								System.out.print("在线好友数" + OnlineUsers.onlineUsers.size()+ "online users: " + user);
 							
 						}
 						 catch (Exception e) {
@@ -183,7 +185,7 @@ public class ServerThread extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println(user.getUserName()+"exit!");
+//		System.out.println(user.getUserName()+"exit!");
 	}
 
 }

@@ -8,6 +8,7 @@ package tcpchatroom;
  *
  */
 
+import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,9 +22,14 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 
+
+
+
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -46,8 +52,10 @@ public class Client extends JFrame implements WindowListener{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private Container container=this.getContentPane();
 	private JLabel label_username = new JLabel("用户名 ");
 	private JLabel label_password = new JLabel("密码 ");
+	private JLabel label_privatename = new JLabel("私聊对象");
 	private String[] friends = null;
 	
 	private User user = new User();
@@ -55,18 +63,25 @@ public class Client extends JFrame implements WindowListener{
 	private JTextField textField_username = new JTextField(15);
 	private JTextField textField_password = new JTextField(6);
 	private JTextField textField_inputText = new JTextField(30);
+	private JTextField textField_name = new JTextField(22);
 
 	private JButton button_join = new JButton("登陆");
-	private JButton button_sent = new JButton("发送");
 	private JButton button_regist = new JButton("注册");
+	private JButton button_sent = new JButton("群聊");
+	private JButton button_privatechat = new JButton("私聊");
+	
 	
 	/* 消息窗口 */
 	private JTextArea textarea_messagerecord = new ContentArea();
 	private  JScrollPane scrollPane = new JScrollPane(textarea_messagerecord);
 
+	private JTextArea textarea_friends = new ContentArea();
+	private  JScrollPane scrollPane2 = new JScrollPane(textarea_friends);
+
+	
 	private Socket socket;
 	private PrintWriter out;
-	public BufferedReader in = null;
+	private  BufferedReader in;
 
 	public Client(){
 		
@@ -85,14 +100,14 @@ public class Client extends JFrame implements WindowListener{
 		
 		setLayout(new FlowLayout(FlowLayout.CENTER, 30, 10));
 		setTitle("TCP Chat Room Client");
-		setSize(600, 400);
+		setSize(500,300);
 		setResizable(true);
 
 		textarea_messagerecord.setLineWrap(true);
 		textarea_messagerecord.setEditable(false);
 
 		JPanel p1 = new JPanel();//面板，嵌板
-		p1.setSize(600, 40);
+		p1.setSize(500, 40);
 		p1.setLayout(new FlowLayout(FlowLayout.LEFT, 30, 10));
 		p1.add(label_username);
 		p1.add(textField_username);
@@ -101,28 +116,41 @@ public class Client extends JFrame implements WindowListener{
 		
 		
 		JPanel p2 = new JPanel();
-		p2.setSize(600, 40);
-		p2.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 10));
+		p2.setSize(600, 40);		
+		p2.setLayout(new FlowLayout(FlowLayout.LEFT, 30, 10));
 		p2.add(button_join);
+		button_join.setBounds(600, 40, 30, 20);
+		
 		p2.add(button_regist);
 
 		JPanel p3 = new JPanel();
 		p3.setSize(600, 40);
 		p3.setLayout(new FlowLayout(FlowLayout.LEFT, 30, 10));
-		p3.add(textField_inputText);
+		textField_inputText.setVisible(false);
+		button_sent.setVisible(false);
+		p3.add(textField_inputText);		
 		p3.add(button_sent);
 
 		JPanel p4 = new JPanel();
 		p4.setSize(600, 40);
 		p4.setLayout(new FlowLayout(FlowLayout.LEFT, 30, 10));
+		button_privatechat.setVisible(false);
+		textField_name.setVisible(false);
+		label_privatename.setVisible(false);
+		p4.add(label_privatename);
+		p4.add(textField_name);
+		p4.add(button_privatechat);
 
 		
-		
-		add(p1);
-		add(p2);
-		add(scrollPane);
-		add(p3);
-		add(p4);
+		container.add(p1);
+		container.add(p2);
+		scrollPane.setVisible(false);
+		scrollPane2.setVisible(false);
+		container.add(scrollPane);
+		container.add(scrollPane2);		
+		container.add(p4);
+		container.add(p3);
+		textarea_friends.setEditable(false);
 
 		ButtonJoinListener joinListener = new ButtonJoinListener();
 		button_join.addActionListener(joinListener);
@@ -131,7 +159,9 @@ public class Client extends JFrame implements WindowListener{
 		
 		ButtonRegistListener registListener = new ButtonRegistListener();
 		button_regist.addActionListener(registListener);
-
+		ButtonPrivateChatListener privateChatListener = new ButtonPrivateChatListener();
+		button_privatechat.addActionListener(privateChatListener);
+		
 		//默认用户名和密码都是空
 		textField_username.setText("admin");
 		textField_password.setText("admin");
@@ -143,6 +173,8 @@ public class Client extends JFrame implements WindowListener{
 
 	}
 
+
+	
 	class ContentArea extends JTextArea{
 		/**
 		 * 
@@ -155,20 +187,37 @@ public class Client extends JFrame implements WindowListener{
 	}
 	
 	class ButtonJoinListener implements ActionListener{
-
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			user.setUserName(textField_username.getText());
 			user.setPasswd(textField_password.getText());
 			
+			
 			ClientDataGram logindatagram = new ClientDataGram((short) 1,user.getUserName(),user.getPasswd(),true);//登录
 			out.println(logindatagram.toString());
 			
-			//加入聊天室后禁止修改参数
-			button_join.setEnabled(false);
-			button_join.setText("已加入");
-			textField_password.setEditable(false);
-			textField_username.setEditable(false);
+			//加入聊天室后禁止修改参数		
+			setSize(600,600);
+			button_join.setVisible(false);
+			button_regist.setVisible(false);
+			//label_username.setVisible(false);
+			label_password.setVisible(false);
+			textField_password.setVisible(false);
+			textField_username.setVisible(false);
+			
+			
+			scrollPane.setVisible(true);
+			scrollPane2.setVisible(true);
+			textField_name.setVisible(true);
+			textField_inputText.setVisible(true);
+			button_sent.setVisible(true);
+			button_privatechat.setVisible(true);
+			label_privatename.setVisible(true);
+			
+			label_username.setText(user.getUserName() + "   is   "+ (user.getState()?"onine":"offline"));
+			textarea_friends.setText(null);
+			textarea_friends.setText("		好友列表\n");
+			
 		}
 	}
 	
@@ -177,18 +226,38 @@ public class Client extends JFrame implements WindowListener{
 			// TODO Auto-generated method stub
 			user.setUserName(textField_username.getText());
 			user.setPasswd(textField_password.getText());
-			ClientDataGram logindatagram = new ClientDataGram((short) 4,user.getUserName(),user.getPasswd(),true);//注册
+			
+			
+			ClientDataGram logindatagram = new ClientDataGram((short) 4,user.getUserName(),user.getPasswd());//注册
 			out.println(logindatagram.toString());
 			
-			textField_password.setEditable(true);
-			textField_username.setEditable(true);
+			//加入聊天室后禁止修改参数		
+			setSize(600,600);
+			button_join.setVisible(false);
+			button_regist.setVisible(false);
+			//label_username.setVisible(false);
+			label_password.setVisible(false);
+			textField_password.setVisible(false);
+			textField_username.setVisible(false);
+			
+			
+			scrollPane.setVisible(true);
+			scrollPane2.setVisible(true);
+			textField_name.setVisible(true);
+			textField_inputText.setVisible(true);
+			button_sent.setVisible(true);
+			button_privatechat.setVisible(true);
+			label_privatename.setVisible(true);
+			
+			label_username.setText(user.getUserName() + "   is   "+ (user.getState()?"onine":"offline"));
+			textarea_friends.setText(null);
+			textarea_friends.append("		好友列表\n");	
 		}
 	}
 
 	class ButtonSentListener implements ActionListener{//发送信息
 		public void actionPerformed(ActionEvent arg0) {//**********************************需要修改
-			String message_text = textField_inputText.getText();
-
+			String message_text = textField_inputText.getText();		
 			friends  = (String[]) OnlineUsers.onlineUsers.toArray(new String [OnlineUsers.onlineUsers.size()]);
 			ClientDataGram clientdatagram = new ClientDataGram((short) 0,friends,message_text);//普通消息	
 			try {
@@ -197,7 +266,31 @@ public class Client extends JFrame implements WindowListener{
 				e.printStackTrace();
 			}
 			//textarea_messagerecord.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
-			textarea_messagerecord.append(user.getUserName() + "  "+ textField_inputText.getText()+'\n');
+			label_username.setText(user.getUserName() + "   is   "+ (user.getState()?"onine":"offline"));
+			textarea_messagerecord.append(user.getUserName() + ":  "+ textField_inputText.getText()+'\n');
+			textField_inputText.setText("");
+		}
+
+	}
+	
+
+	class ButtonPrivateChatListener implements ActionListener{//私聊发送信息
+		public void actionPerformed(ActionEvent arg0) {//**********************************需要修改
+			String message_text = textField_name.getText();		
+			friends = new String []{message_text};
+//			System.out.print(message_text + "\n" + " 私聊好友");
+//			for (String name:  friends)
+//				System.out.println("    " + name );
+			//friends  = (String[]) OnlineUsers.onlineUsers.toArray(new String [OnlineUsers.onlineUsers.size()]);
+			ClientDataGram clientdatagram = new ClientDataGram((short) 0,friends,textField_inputText.getText());//普通消息	
+			try {
+				out.println(clientdatagram.toString());
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			//textarea_messagerecord.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+			label_username.setText(user.getUserName() + "   is   "+ (user.getState()?"onine":"offline"));
+			textarea_messagerecord.append(user.getUserName() + ": "+ textField_inputText.getText()+'\n');
 			textField_inputText.setText("");
 		}
 
@@ -276,7 +369,7 @@ public class Client extends JFrame implements WindowListener{
 		
 		Client chatRoom = new Client();
 		
-		ClientThread thread = new ClientThread(chatRoom.textarea_messagerecord, chatRoom.socket,chatRoom.in);
+		ClientThread thread = new ClientThread(chatRoom.textarea_messagerecord,chatRoom.textarea_friends, chatRoom.socket,chatRoom.in);
 		thread.start();
 		
 		chatRoom.setLocationRelativeTo(null);
